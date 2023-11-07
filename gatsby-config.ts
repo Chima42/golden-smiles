@@ -16,6 +16,14 @@ const config: GatsbyConfig = {
     "gatsby-plugin-sharp",
     "gatsby-transformer-sharp",
     {
+      resolve: "gatsby-plugin-react-svg",
+      options: {
+        rule: {
+          include: /images/ // See below to configure properly
+        }
+      }
+    },
+    {
       resolve: `gatsby-plugin-webfonts`,
       options: {
         fonts: {
