@@ -30,7 +30,7 @@ const config: GatsbyConfig = {
           google: [
             {
               family: "Assistant",
-              variants: ["400", "500", "600"],
+              variants: ["400", "500", "600", "700"],
             }
           ],
         },
