@@ -7,12 +7,12 @@ import Star from "../images/star.svg"
 interface IReview {
   name: string;
   yourVisit: string;
-  rating: number;
-  procedure: string;
+  rating: string;
+  treatment: string;
   title: string;
   consultant: string;
   isVisible: boolean;
-  dentistName: string;
+  practice: string;
   date: string;
 }
 
@@ -22,11 +22,11 @@ const IndexPage: React.FC<PageProps> = () => {
       return {
         name: data["Hello, what's your name?"],
         yourVisit: data["How was your visit to the dentist you went to?"],
-        rating: data["What rating would you give it out of 5?"],
-        procedure: data["What operation/ procedure did you go in for?"],
+        rating: `${data["What rating would you give it out of 5?"]}`,
+        treatment: data["What operation/ procedure did you go in for?"],
         title: data["Give your review a title"],
         consultant: data["What was the name of the consultant you saw?"],
-        dentistName: data["Which dentist did you visit?"],
+        practice: data["Which dentist did you visit?"],
         date: data["Submitted At"],
         isVisible: true
       }
@@ -35,62 +35,108 @@ const IndexPage: React.FC<PageProps> = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [ratingsFilter, setRatingsFilter] = useState([{
-    filter: "all",
+    rating: "All",
     selected: true
   },
   {
-    filter: "1",
+    rating: "1",
     selected: false
   },
   {
-    filter: "2",
+    rating: "2",
     selected: false
   },
   {
-    filter: "3",
+    rating: "3",
     selected: false
   },
   {
-    filter: "4",
+    rating: "4",
     selected: false
   },
   {
-    filter: "5",
+    rating: "5",
     selected: false
   }])
-  const [dentistFilter] = useState([{
-    name: "all",
+  const [practiceFilter, setPracticeFilter] = useState([{
+    practice: "All",
     selected: true
   }, ...formatJSON().map(x => ({
-    name: x.dentistName,
+    practice: x.practice,
     selected: false
   }))])
+  const [treatmentFilter, setTreatmentFilter] = useState([{
+    treatment: "All",
+    selected: true
+  }, ...formatJSON().map(x => ({
+    treatment: x.treatment,
+    selected: false
+  }))])
+  const [sortOptions, setSortOptions] = useState([{
+    type: "newest",
+    selected: true
+  }, {
+    type: "oldest",
+    selected: false
+  }])
 
   const [reviewList, setReviewList] = useState<IReview[]>(formatJSON());
 
-  const filterByRating = (rating: string) => {
-    setRatingsFilter(ratingsFilter.map(x => {
-      x.selected = x.filter === rating;
+  const activeFilters = () => {
+    const filter = {
+      ...ratingsFilter.find(x => x.selected),
+      ...practiceFilter.find(x => x.selected),
+      ...treatmentFilter.find(x => x.selected)
+    }
+    delete filter["selected"];
+    if (filter["practice"] === "All") {
+      delete filter["practice"];
+    }
+    if (filter["rating"] === "All") {
+      delete filter["rating"];
+    }
+    if (filter["treatment"] === "All") {
+      delete filter["treatment"];
+    }
+    return filter;
+  }
+
+  const filteredList = () => {
+    return reviewList
+      .filter((item: any) => {
+        return Object.entries(activeFilters()).every(([k, v]) => item[k] === v)
+      }).sort(() => {
+        const activeSort = sortOptions.find(o => o.selected)?.type;
+        return activeSort === "newest" ? -1 : 1
+      })
+  }
+
+  const sortByDate = (type: string) => {
+    setSortOptions(sortOptions.map(x => {
+      x.selected = x.type === type;
       return x;
     }))
-    setReviewList(reviewList.map(x => {
-      if (rating === "all") {
-        x.isVisible = true;
-        return x;
-      }
-      x.isVisible = `${x.rating}` === rating;
+  }
+
+  const filterByRating = (rating: string) => {
+    setRatingsFilter(ratingsFilter.map(x => {
+      x.selected = x.rating === rating;
+      return x;
+    }))
+  }
+
+  const filterByTreatment = (event: any) => {
+    const treatment = event.target.value;
+    setTreatmentFilter(treatmentFilter.map(x => {
+      x.selected = x.treatment === treatment;
       return x;
     }))
   }
 
   const filterByDentist = (event: any) => {
     const dentist = event.target.value;
-    setReviewList(reviewList.map(x => {
-      if (dentist === "all") {
-        x.isVisible = true;
-        return x;
-      }
-      x.isVisible = x.dentistName === dentist;
+    setPracticeFilter(practiceFilter.map(x => {
+      x.selected = x.practice === dentist;
       return x;
     }))
   }
@@ -98,6 +144,11 @@ const IndexPage: React.FC<PageProps> = () => {
   const handleFilterClick = () => {
     let copy = !sidebarOpen;
     setSidebarOpen(copy)
+  }
+
+  const formatDate = (date: string) => {
+    const [month, day, year] = date.split(" ")[0].split("/");
+    return new Date(`${day}/${month}/${year}`)
   }
 
   return (
@@ -114,30 +165,33 @@ const IndexPage: React.FC<PageProps> = () => {
         <StyledHeading> Reviews </StyledHeading>
         <FilterButton onClick={handleFilterClick}>Filter</FilterButton>
         <ReviewsWrapper>
-          {reviewList.map((x) => (
+          {filteredList().map((x) => (
             <Review className={x.isVisible ? "" : "hide"}>
               <ReviewHeader>
-                <StyledImage src="https://placehold.co/50x50" alt="" />
-                <ReviewBody>
-                  <StyledReviewTitle>{x.title}</StyledReviewTitle>
-                  <StarWrapper>
-                    {[...Array(x.rating).keys()].map((_) => (
-                      <Star />
-                    ))}
-                  </StarWrapper>
-                  <ReviewDescription>{x.yourVisit}</ReviewDescription>
-                </ReviewBody>
+                <HeaderLeft>
+                  <StyledImage src="https://placehold.co/50x50" alt="" />
+                  <ReviewBody>
+                    <StyledReviewTitle>{x.title}</StyledReviewTitle>
+                    <StarWrapper>
+                      {[...Array(Number(x.rating)).keys()].map((_) => (
+                        <Star />
+                      ))}
+                    </StarWrapper>
+                    <ReviewDescription>{x.yourVisit}</ReviewDescription>
+                  </ReviewBody>
+                </HeaderLeft>
+                <ReviewDate>{formatDate(x.date).toDateString()}</ReviewDate>
               </ReviewHeader>
               <StyledHR />
               <MetaWrapper>
                 <ReviewMeta>
-                  Visited: <span>{x.dentistName}</span>{" "}
+                  Visited: <span>{x.practice}</span>
                 </ReviewMeta>
                 <ReviewMeta>
-                  Treated by: <span>{x.consultant}</span>{" "}
+                  Treated by: <span>{x.consultant}</span>
                 </ReviewMeta>
                 <ReviewMeta>
-                  Went in for: <span>{x.procedure}</span>{" "}
+                  Treatment type: <span>{x.treatment}</span>
                 </ReviewMeta>
               </MetaWrapper>
             </Review>
@@ -145,26 +199,48 @@ const IndexPage: React.FC<PageProps> = () => {
         </ReviewsWrapper>
         <Sidebar className={sidebarOpen ? "open" : ""}>
           <SidebarSection>
+            <h3>Sort by Date</h3>
+            <SortOptionsWrapper>
+              {sortOptions.map((x) => (
+                <FilterOption
+                  key={x.type}
+                  className={x.selected ? "active" : ""}
+                  onClick={() => sortByDate(x.type)}
+                >
+                  {x.type}
+                </FilterOption>
+              ))}
+            </SortOptionsWrapper>
+          </SidebarSection>
+          <SidebarSection>
             <h3>Filter by Rating</h3>
             <RatingsFilterWrapper>
               {ratingsFilter.map((x) => (
                 <FilterOption
-                  key={x.filter}
-                  className={x.selected ? "ratingActive" : ""}
-                  onClick={() => filterByRating(x.filter)}
+                  key={x.rating}
+                  className={x.selected ? "active" : ""}
+                  onClick={() => filterByRating(x.rating)}
                 >
-                  {x.filter}
+                  {x.rating}
                 </FilterOption>
               ))}
             </RatingsFilterWrapper>
           </SidebarSection>
           <SidebarSection>
-            <h3>Filter by Dentist</h3>
-            <DentistDropdown name="dentists" id="dentists" onChange={filterByDentist}>
-              {dentistFilter.map((x, i) => (
-                <option key={i}>{x.name}</option>
+            <h3>Filter by Practice</h3>
+            <Dropdown name="dentists" id="dentists" onChange={filterByDentist}>
+              {practiceFilter.map((x, i) => (
+                <option key={i}>{x.practice}</option>
               ))}
-            </DentistDropdown>
+            </Dropdown>
+          </SidebarSection>
+          <SidebarSection>
+            <h3>Filter by Treatment</h3>
+            <Dropdown name="treatment" id="treatment" onChange={filterByTreatment}>
+              {treatmentFilter.map((x, i) => (
+                <option key={i}>{x.treatment}</option>
+              ))}
+            </Dropdown>
           </SidebarSection>
         </Sidebar>
       </StyledMain>
@@ -204,12 +280,17 @@ const FilterButton = styled.div`
   }
 `
 
+const SortOptionsWrapper = styled.div`
+  display: flex;
+  gap: 5px;
+`
+
 const RatingsFilterWrapper = styled.div`
   display: flex;
   justify-content: space-between;
 `
 
-const DentistDropdown = styled.select`
+const Dropdown = styled.select`
   border: none;
   border-radius: 3px;
   background-color: #fde8ad;
@@ -257,8 +338,17 @@ const StarWrapper = styled.div`
 
 const ReviewHeader = styled.div`
   display: flex;
+  justify-content: space-between;
+  `
+  
+const HeaderLeft = styled.div`
   gap: 20px;
-  align-items: center;
+  display: inherit;
+`
+
+const ReviewDate = styled.span`
+  font-size: 13px;
+  opacity: 0.4;
 `
 
 const ReviewBody = styled.div`
@@ -288,7 +378,7 @@ const Sidebar = styled.aside`
   width: 70%;
   transform: translateX(100vw);
   height: 100vh;
-  .ratingActive {
+  .active {
     background-color: var(--purple);
     color: #fff;
   }
