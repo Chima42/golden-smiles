@@ -1,24 +1,39 @@
 import React, { useEffect, useState } from "react"
-import { HeadFC, PageProps, graphql, Link } from "gatsby"
+import type { HeadFC, PageProps } from "gatsby"
 import styled from "styled-components"
+import reviewsData from "../data/reviews_data.json"
 import Star from "../images/star.svg"
-import Chevron from "../images/right-arrow.svg"
-import Globe from "../images/globe.svg"
 
-interface IPractice {
+interface IReview {
   name: string;
-  jsonId: string;
-  address: string;
-}
-interface IPracticeUI extends IPractice {
+  yourVisit: string;
+  rating: string;
+  treatment: string;
+  title: string;
+  consultant: string;
   isVisible: boolean;
+  practice: string;
+  date: string;
 }
 
-const IndexPage: React.FC<PageProps> = ({ data }: any) => {
-  const practiceData: IPracticeUI[] = data.allPracticesJson.edges.map((x: any) => x.node)
+const IndexPage: React.FC<PageProps> = () => {
+  const formatJSON = (): IReview[] => {
+    return reviewsData.map(data => {
+      return {
+        name: data["Hello, what's your name?"],
+        yourVisit: data["How was your visit to the dentist you went to?"],
+        rating: `${data["What rating would you give it out of 5?"]}`,
+        treatment: data["What operation/ procedure did you go in for?"],
+        title: data["Give your review a title"],
+        consultant: data["What was the name of the consultant you saw?"],
+        practice: data["Which dentist did you visit?"],
+        date: data["Submitted At"],
+        isVisible: true
+      }
+    })
+  }
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [ratingsFilter, setRatingsFilter] = useState([{
     rating: "All",
     selected: true
@@ -43,98 +58,81 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     rating: "5",
     selected: false
   }])
+  const [practiceFilter, setPracticeFilter] = useState([{
+    practice: "All",
+    selected: true
+  }, ...formatJSON().map(x => ({
+    practice: x.practice,
+    selected: false
+  }))])
+  const [treatmentFilter, setTreatmentFilter] = useState([{
+    treatment: "All",
+    selected: true
+  }, ...formatJSON().map(x => ({
+    treatment: x.treatment,
+    selected: false
+  }))])
+  const [sortOptions, setSortOptions] = useState([{
+    type: "newest",
+    selected: true
+  }, {
+    type: "oldest",
+    selected: false
+  }])
+
+  const [reviewList, setReviewList] = useState<IReview[]>(formatJSON());
 
   useEffect(() => {
-    if (window.innerWidth < 760) {
-      setIsMobile(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      document.getElementsByTagName("body")[0].classList.toggle("set-overflow");
-    }
+    document.getElementsByTagName("body")[0].classList.toggle("set-overflow");
   }, [!sidebarOpen])
 
-  const [practiceFilter, setPracticeFilter] = useState<{
-    practice: string,
-    id: string,
-    selected: boolean
-  }[]>([])
-
-  const [pagination, setPagination] = useState({
-    data: [] as IPracticeUI[],
-    offset: 0,
-    numberPerPage: 10,
-    pageCount: 0,
-    currentData: [] as IPracticeUI[]
-  });
-
-  useEffect(() => {
-    setPagination({
-      data: practiceData.slice(0,50),
-      offset: 0,
-      numberPerPage: 9,
-      pageCount: 0,
-      currentData: [] as IPracticeUI[]
-    })
-  }, [practiceData.length])
-  
-  useEffect(() => {
-    setPracticeFilter([{
-      practice: "All",
-      id: "0",
-      selected: true
-    }, ...practiceData.slice(0,50).map(x => ({
-      practice: x.name,
-      id: x.jsonId,
-      selected: false
-    }))]);
-  }, [practiceData.length])
-
-  useEffect(() => {
-    setPagination((prevState) => {
-      return {
-        ...prevState,
-        pageCount: prevState.data.length / prevState.numberPerPage,
-        currentData: prevState.data.slice(pagination.offset, pagination.offset + pagination.numberPerPage)
-      }
-    })
-  }, [pagination.numberPerPage, pagination.offset])
-
-  const handlePageClick = (event: any) => {
-    const selected = event.selected;
-    const offset = selected * pagination.numberPerPage
-    setPagination({ ...pagination, offset })
-  }
-
   const activeFilters = () => {
-    const filter: any = {
+    const filter = {
       ...ratingsFilter.find(x => x.selected),
-      ...practiceFilter.find(x => x.selected)
+      ...practiceFilter.find(x => x.selected),
+      ...treatmentFilter.find(x => x.selected)
     }
     delete filter["selected"];
-    delete filter["id"];
     if (filter["practice"] === "All") {
       delete filter["practice"];
     }
     if (filter["rating"] === "All") {
       delete filter["rating"];
     }
-    console.log(filter)
+    if (filter["treatment"] === "All") {
+      delete filter["treatment"];
+    }
     return filter;
   }
 
-  // const filteredList = () => {
-  //   return practiceList
-  //     .filter((item: any) => {
-  //       return Object.entries(activeFilters()).every(([k, v]) => item[k] === v)
-  //     })
-  // }
+  const filteredList = () => {
+    return reviewList
+      .filter((item: any) => {
+        return Object.entries(activeFilters()).every(([k, v]) => item[k] === v)
+      }).sort(() => {
+        const activeSort = sortOptions.find(o => o.selected)?.type;
+        return activeSort === "newest" ? -1 : 1
+      })
+  }
+
+  const sortByDate = (type: string) => {
+    setSortOptions(sortOptions.map(x => {
+      x.selected = x.type === type;
+      return x;
+    }))
+  }
 
   const filterByRating = (rating: string) => {
     setRatingsFilter(ratingsFilter.map(x => {
       x.selected = x.rating === rating;
+      return x;
+    }))
+  }
+
+  const filterByTreatment = (event: any) => {
+    const treatment = event.target.value;
+    setTreatmentFilter(treatmentFilter.map(x => {
+      x.selected = x.treatment === treatment;
       return x;
     }))
   }
@@ -152,55 +150,72 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     setSidebarOpen(copy)
   }
 
-  const searchByText = (item: IPracticeUI) => {
-    const itemLine = `${item.name} ${item.address}`
-    return itemLine.toLowerCase().includes(searchTerm.toLowerCase())
+  const formatDate = (date: string) => {
+    const [month, day, year] = date.split(" ")[0].split("/");
+    return new Date(`${day}/${month}/${year}`)
   }
 
   return (
     <StyledWrapper>
       <StyledHeader>
         <StyledLogo>Golden Smiles</StyledLogo>
-        <WriteAReview
-          target="_blank"
-          href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y"
-        >
-          write a review
-        </WriteAReview>
+        <WriteAReview target="_blank" href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">write a review</WriteAReview>
       </StyledHeader>
-      {sidebarOpen && <BlackBg onClick={handleFilterClick} />}
+      {
+        sidebarOpen &&
+        <BlackBg onClick={handleFilterClick} />
+      }
       <StyledMain>
         <StyledHeading> Reviews </StyledHeading>
-        {
-          <InnerWrapper>
-            <SearchBar onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by practice or address"/>
-            <small>Showing {practiceData.filter(searchByText).slice(0,18).length} of {practiceData.length} Practices</small>
-            <Practices>
-              {
-                practiceData.filter(searchByText).slice(0,18).map(item => 
-                <Practice key={item.jsonId}>
-                  <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
+        <FilterButton onClick={handleFilterClick}>Filter</FilterButton>
+        <ReviewsWrapper>
+          {filteredList().map((x) => (
+            <Review className={x.isVisible ? "" : "hide"}>
+              <ReviewHeader>
+                <HeaderLeft>
+                  <StyledImage src="https://placehold.co/50x50" alt="" />
+                  <ReviewBody>
+                    <StyledReviewTitle>{x.title}</StyledReviewTitle>
                     <StarWrapper>
-                      {[...Array(5).keys()].map((_, i) => (
-                        <Star key={i} />
+                      {[...Array(Number(x.rating)).keys()].map((_) => (
+                        <Star />
                       ))}
                     </StarWrapper>
-                    <h3>{item.name}</h3> <span>{item.address}</span>
-                    <ReviewHR />
-                    <PracticeFooter>
-                      <LeaveAReview href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">
-                        leave a review
-                        <Chevron />
-                      </LeaveAReview>
-                      <Globe />
-                    </PracticeFooter>
-                  </Link>
-                </Practice>)
-              }
-            </Practices>
-          </InnerWrapper>
-        }
-        {/* <Sidebar className={sidebarOpen ? "open" : ""}>
+                    <ReviewDescription>{x.yourVisit}</ReviewDescription>
+                  </ReviewBody>
+                </HeaderLeft>
+                <ReviewDate>{formatDate(x.date).toDateString()}</ReviewDate>
+              </ReviewHeader>
+              <StyledHR />
+              <MetaWrapper>
+                <ReviewMeta>
+                  Visited: <span>{x.practice}</span>
+                </ReviewMeta>
+                <ReviewMeta>
+                  Treated by: <span>{x.consultant}</span>
+                </ReviewMeta>
+                <ReviewMeta>
+                  Treatment type: <span>{x.treatment}</span>
+                </ReviewMeta>
+              </MetaWrapper>
+            </Review>
+          ))}
+        </ReviewsWrapper>
+        <Sidebar className={sidebarOpen ? "open" : ""}>
+          <SidebarSection>
+            <h3>Sort by Date</h3>
+            <SortOptionsWrapper>
+              {sortOptions.map((x) => (
+                <FilterOption
+                  key={x.type}
+                  className={x.selected ? "active" : ""}
+                  onClick={() => sortByDate(x.type)}
+                >
+                  {x.type}
+                </FilterOption>
+              ))}
+            </SortOptionsWrapper>
+          </SidebarSection>
           <SidebarSection>
             <h3>Filter by Rating</h3>
             <RatingsFilterWrapper>
@@ -223,102 +238,19 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
               ))}
             </Dropdown>
           </SidebarSection>
-        </Sidebar> */}
+          <SidebarSection>
+            <h3>Filter by Treatment</h3>
+            <Dropdown name="treatment" id="treatment" onChange={filterByTreatment}>
+              {treatmentFilter.map((x, i) => (
+                <option key={i}>{x.treatment}</option>
+              ))}
+            </Dropdown>
+          </SidebarSection>
+        </Sidebar>
       </StyledMain>
     </StyledWrapper>
   );
 }
-
-export const query = graphql`
-  query GetPractices {
-    allPracticesJson {
-      edges {
-        node {
-          address
-          jsonId
-          name
-        }
-      }
-    }
-  }
-`
-
-const PracticeFooter = styled.footer`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  svg {
-    width: 18px;
-    path {
-      stroke: var(--purple);
-    }
-  }
-`
-
-const ReviewHR = styled.hr`
-  border: none;
-  width: 100%;
-  border-bottom: solid 1px rgba(0,0,0,0.1);
-  margin: 10px 0 0;
-`
-
-const LeaveAReview = styled.a`
-  display: inline-block;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--purple);
-  text-decoration: none;
-  padding: 0;
-  svg {
-    width: 6px;
-    margin-left: 6px;
-    position: relative;
-    top: 2px;
-  }
-  &:hover {
-    opacity: 0.7;
-  }
-`
-
-const Practices = styled.ul`
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-`
-
-const Practice = styled.li`
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  flex: 1 0 48%;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 3px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  span {
-    min-height: 42px;
-    display: block;
-  }
-`
-
-const SearchBar = styled.input`
-  width: 100%;
-  padding: 20px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0);
-  border-radius: 3px;
-  background-color: #fff;
-  font-size: 16px;
-  border: none;
-  transition: all 0.25s ease;
-  &:focus {
-    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-    outline: none;
-  }
-`
 
 const SidebarSection = styled.div`
   h3 {
@@ -398,7 +330,7 @@ const FilterOption = styled.span`
 const StarWrapper = styled.div`
   display: flex;
   gap: 2px;
-  margin: 3px 0 10px; 
+  margin: 3px 0; 
   svg {
     width: 18px;
     height: auto;
@@ -431,7 +363,7 @@ const ReviewBody = styled.div`
   }
 `
 
-const InnerWrapper = styled.section`
+const ReviewsWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -534,7 +466,7 @@ const Review = styled.div`
   text-align: center;
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
 `
-const StyledMain = styled.section`
+const StyledMain = styled.div`
   display: flex;
   max-width: 1010px;
   width: 100%;
@@ -544,10 +476,10 @@ const StyledMain = styled.section`
   .open {
     transform: translateX(30vw);
   }
-  // @media only screen and (min-width: 760px) {
-  //   display: grid;
-  //   grid-template-columns: 70% 1fr;
-  // }
+  @media only screen and (min-width: 760px) {
+    display: grid;
+    grid-template-columns: 70% 1fr;
+  }
 `
 
 const StyledLogo = styled.div`
