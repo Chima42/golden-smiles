@@ -4,6 +4,7 @@ import styled from "styled-components"
 import Star from "../images/star.svg"
 import Chevron from "../images/right-arrow.svg"
 import Globe from "../images/globe.svg"
+import practices from "../data/practices.json";
 
 interface IPractice {
   name: string;
@@ -15,7 +16,10 @@ interface IPracticeUI extends IPractice {
 }
 
 const IndexPage: React.FC<PageProps> = ({ data }: any) => {
-  const practiceData: IPracticeUI[] = data.allPracticesJson.edges.map((x: any) => x.node)
+  const practiceData: IPracticeUI[] = practices.map(x => {
+    (x as any)["isVisible"] = true;
+    return x as IPracticeUI
+  })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");

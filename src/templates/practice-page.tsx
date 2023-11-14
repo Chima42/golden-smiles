@@ -1,7 +1,9 @@
 import React from "react"
 
-const BlogPostTemplate = () => (
-  <h1>Practice Template</h1>
-)
+const PracticePage = (props: any) => {
+  const { pageContext } = props;
 
-export default BlogPostTemplate
+  return <h1>{pageContext.name}</h1>
+}
+
+export default PracticePage

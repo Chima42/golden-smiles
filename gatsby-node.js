@@ -7,7 +7,7 @@ exports.createSchemaCustomization = ({ actions, schema }) => {
       name: 'PracticesJson',
       fields: {
         name: 'String!',
-        jsonId: 'Int!',
+        jsonId: 'String!',
         address: 'String!' 
       },
       interfaces: ['Node'],
@@ -21,23 +21,30 @@ exports.createSchemaCustomization = ({ actions, schema }) => {
 
 exports.createPages = async ({ graphql, actions }) => {
   const { data } = await graphql(`
-    query Practices {
+    query GetPractices {
       allPracticesJson {
         edges {
           node {
             jsonId
+            name
+            address
           }
         }
       }
     }
   `) 
 
-  data.allPracticesJson.edges.forEach(node => {
+  const practices = data.allPracticesJson.edges;
+  practices.forEach(node => {
+    // quick fix to remove top level object node
+    const practice = JSON.parse(JSON.stringify(node));
     actions.createPage({
-      path: '/practices/' + node.name,
+      path: '/practices/' + practice.node.name.split(" ").join("-").toLowerCase(),
       component: path.resolve("./src/templates/practice-page.tsx"),
       context: {
-        slug: node.name,
+        name: practice.node.name,
+        id: practice.node.jsonId,
+        address: practice.node.address,
       }
     })
   })
