@@ -5,6 +5,8 @@ import Star from "../images/star.svg"
 import Chevron from "../images/right-arrow.svg"
 import Globe from "../images/globe.svg"
 import practices from "../data/practices.json";
+import Layout from "../components/Layout"
+import StarRating from "../components/StarRating"
 
 interface IPractice {
   name: string;
@@ -20,8 +22,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     (x as any)["isVisible"] = true;
     return x as IPracticeUI
   })
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [ratingsFilter, setRatingsFilter] = useState([{
     rating: "All",
@@ -47,18 +47,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     rating: "5",
     selected: false
   }])
-
-  useEffect(() => {
-    if (window.innerWidth < 760) {
-      setIsMobile(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      document.getElementsByTagName("body")[0].classList.toggle("set-overflow");
-    }
-  }, [!sidebarOpen])
 
   const [practiceFilter, setPracticeFilter] = useState<{
     practice: string,
@@ -151,85 +139,43 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     }))
   }
 
-  const handleFilterClick = () => {
-    let copy = !sidebarOpen;
-    setSidebarOpen(copy)
-  }
 
   const searchByText = (item: IPracticeUI) => {
     const itemLine = `${item.name} ${item.address}`
     return itemLine.toLowerCase().includes(searchTerm.toLowerCase())
   }
 
+  const filteredPractices = () => {
+    return practiceData.filter(searchByText).slice(0,18);
+  }
+
   return (
-    <StyledWrapper>
-      <StyledHeader>
-        <StyledLogo>Golden Smiles</StyledLogo>
-        <WriteAReview
-          target="_blank"
-          href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y"
-        >
-          write a review
-        </WriteAReview>
-      </StyledHeader>
-      {sidebarOpen && <BlackBg onClick={handleFilterClick} />}
-      <StyledMain>
+        <Layout>
         <StyledHeading> Reviews </StyledHeading>
-        {
-          <InnerWrapper>
-            <SearchBar onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by practice or address"/>
-            <small>Showing {practiceData.filter(searchByText).slice(0,18).length} of {practiceData.length} Practices</small>
-            <Practices>
-              {
-                practiceData.filter(searchByText).slice(0,18).map(item => 
-                <Practice key={item.jsonId}>
-                    <StarWrapper>
-                      {[...Array(5).keys()].map((_, i) => (
-                        <Star key={i} />
-                      ))}
-                    </StarWrapper>
-                    <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
-                      <h3>{item.name}</h3> <span>{item.address}</span>
-                    </Link>
-                    <ReviewHR />
-                    <PracticeFooter>
-                      <LeaveAReview href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">
-                        leave a review
-                        <Chevron />
-                      </LeaveAReview>
-                      <Globe />
-                    </PracticeFooter>
-                </Practice>)
-              }
-            </Practices>
-          </InnerWrapper>
-        }
-        {/* <Sidebar className={sidebarOpen ? "open" : ""}>
-          <SidebarSection>
-            <h3>Filter by Rating</h3>
-            <RatingsFilterWrapper>
-              {ratingsFilter.map((x) => (
-                <FilterOption
-                  key={x.rating}
-                  className={x.selected ? "active" : ""}
-                  onClick={() => filterByRating(x.rating)}
-                >
-                  {x.rating}
-                </FilterOption>
-              ))}
-            </RatingsFilterWrapper>
-          </SidebarSection>
-          <SidebarSection>
-            <h3>Filter by Practice</h3>
-            <Dropdown name="dentists" id="dentists" onChange={filterByDentist}>
-              {practiceFilter.map((x, i) => (
-                <option key={i}>{x.practice}</option>
-              ))}
-            </Dropdown>
-          </SidebarSection>
-        </Sidebar> */}
-      </StyledMain>
-    </StyledWrapper>
+        <Wrapper>
+          <SearchBar onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by practice or address"/>
+          <small>Showing {filteredPractices().length} of {practiceData.length} Practices</small>
+          <Practices>
+            {
+              filteredPractices().map(item => 
+              <Practice key={item.jsonId}>
+                  <StarRating rating={5}/>
+                  <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
+                    <h3>{item.name}</h3> <span>{item.address}</span>
+                  </Link>
+                  <ReviewHR />
+                  <PracticeFooter>
+                    <LeaveAReview target="_blank" href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">
+                      leave a review
+                      <Chevron />
+                    </LeaveAReview>
+                    <Globe />
+                  </PracticeFooter>
+              </Practice>)
+            }
+          </Practices>
+        </Wrapper>
+      </Layout>
   );
 }
 
@@ -330,15 +276,6 @@ const SidebarSection = styled.div`
   margin-bottom: 20px;
 `
 
-const BlackBg = styled.div`
-  width: 100%;
-  top: 0;
-  left: 0;
-  position: absolute;
-  width: 100%;
-  background-color: rgba(0,0,0,0.6);
-  height: 100vh;
-`
 
 const FilterButton = styled.div`
   border-radius: 3px;
@@ -398,19 +335,6 @@ const FilterOption = styled.span`
   }
 `
 
-const StarWrapper = styled.div`
-  display: flex;
-  gap: 2px;
-  margin: 3px 0 10px; 
-  svg {
-    width: 18px;
-    height: auto;
-    path {
-      fill: var(--purple);
-    }
-  }
-`
-
 const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -434,7 +358,7 @@ const ReviewBody = styled.div`
   }
 `
 
-const InnerWrapper = styled.section`
+const Wrapper = styled.section`
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -536,52 +460,6 @@ const Review = styled.div`
   padding: 20px;
   text-align: center;
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-`
-const StyledMain = styled.section`
-  display: flex;
-  max-width: 1010px;
-  width: 100%;
-  gap: 20px;
-  margin: 0 auto;
-  flex-direction: column;
-  .open {
-    transform: translateX(30vw);
-  }
-  // @media only screen and (min-width: 760px) {
-  //   display: grid;
-  //   grid-template-columns: 70% 1fr;
-  // }
-`
-
-const StyledLogo = styled.div`
-  padding: 10px;
-`
-
-const StyledWrapper = styled.div`
-  max-width: 1280px;
-  padding: 0 30px;
-  margin: 0 auto;
-  width: 100%;
-`
-
-const StyledHeader = styled.header`
-  display: flex;
-  justify-content: space-between;
-  padding: 20px 0;
-` 
-
-const WriteAReview = styled.a`
-  background: #fff;
-  text-decoration: none;
-  border: solid 0.13em var(--purple);
-  border-radius: 6px;
-  padding: 11px 16px;
-  font-weight: 600;
-  color: var(--purple);
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-  &:hover {
-    opacity: 0.8;
-  }
 `
 
 export default IndexPage
