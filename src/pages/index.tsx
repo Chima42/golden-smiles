@@ -183,13 +183,14 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
               {
                 practiceData.filter(searchByText).slice(0,18).map(item => 
                 <Practice key={item.jsonId}>
-                  <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
                     <StarWrapper>
                       {[...Array(5).keys()].map((_, i) => (
                         <Star key={i} />
                       ))}
                     </StarWrapper>
-                    <h3>{item.name}</h3> <span>{item.address}</span>
+                    <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
+                      <h3>{item.name}</h3> <span>{item.address}</span>
+                    </Link>
                     <ReviewHR />
                     <PracticeFooter>
                       <LeaveAReview href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">
@@ -198,7 +199,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
                       </LeaveAReview>
                       <Globe />
                     </PracticeFooter>
-                  </Link>
                 </Practice>)
               }
             </Practices>
@@ -302,7 +302,6 @@ const Practice = styled.li`
   background-color: #fff;
   border-radius: 3px;
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
   span {
     min-height: 42px;
     display: block;
