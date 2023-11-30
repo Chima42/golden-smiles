@@ -24,6 +24,7 @@ interface IPractice {
   placeId: string;
   isVisible: boolean;
   reviewsUrl: string;
+  data?: any;
 }
 
 const IndexPage: React.FC<PageProps> = ({ data }: any) => {
@@ -144,14 +145,14 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
 
   const onSearchSelect = async (postcode: string) => {
     const postcodeSearchResponse = await fetch(
-      `http://postcodes.io/outcodes/${postcode.split(" ")[0]}/nearest`
+      `https://postcodes.io/outcodes/${postcode.split(" ")[0]}/nearest`
     );
     const postcodeData = await postcodeSearchResponse.json();
     const postCodes: string[] = postcodeData.result.map((pd: any) => pd.outcode.toLowerCase());
     const foundPractices = filteredList.filter(x => {
       const outcode = x.postcode?.toLowerCase().split(" ")[0];
       return postCodes.some(code => outcode.startsWith(code.toLowerCase()));
-    }).slice(0,20).map(x => x.address);
+    }).slice(0,20);
     const response = await fetch(
       `http://localhost:3000/find-placeid?postcode=${postcode}` 
     );
@@ -167,12 +168,21 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
           },
           body: JSON.stringify({
             placeId: x.placeId,
-            practices: foundPractices.join("|")
+            practices: foundPractices.map(x => x.address).join("|")
           }),
         }
         );
-        const y = await distanceMatrixResponse.json();
-        console.log(y)
+        const response = await distanceMatrixResponse.json();
+        const newList = filteredList.map(x => {
+            const item = response.data.find(d => {
+              return String(d.address).toLowerCase().includes(x.postcode.toLowerCase())
+            })
+            x.data = item?.distance_data;
+            x.isVisible = item?.distance_data ? true : false;
+            return x;
+        })
+        console.log(newList)
+        setFilteredList([...newList])
       } catch (e) {
         console.log(e)
     }
@@ -193,9 +203,15 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
       <Wrapper>
         <Practices>
           {
-            filteredList.map(item => 
+            filteredList.filter(x => x.isVisible).sort((a, b) => a.data?.distance?.text?.split(" ")[0] - b.data?.distance?.text?.split(" ")[0]).map(item => 
             <Practice key={item.placeId}>
-                <StarRating rating={5}/>
+                <DistanceRatingWrapper>
+                  <StarRating rating={5}/>
+                  {
+                    item.data &&
+                    <small>{item.data?.distance?.text} away</small>
+                  }
+                </DistanceRatingWrapper>
                 <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
                   <h3>{item.name}</h3> <span>{item.address}</span>
                 </Link>
@@ -240,6 +256,11 @@ export const query = graphql`
       }
     }
   }
+`
+
+const DistanceRatingWrapper = styled.aside`
+  display: flex;
+  justify-content: space-between;
 `
 
 const PracticeFooter = styled.footer`
