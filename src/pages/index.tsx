@@ -4,24 +4,30 @@ import styled from "styled-components"
 import Star from "../images/star.svg"
 import Chevron from "../images/right-arrow.svg"
 import Globe from "../images/globe.svg"
-import practices from "../data/practices.json";
+import practices from "../data/practicesV3.json";
 import Layout from "../components/Layout"
+import Searchbar from "../components/Searchbar"
 import StarRating from "../components/StarRating"
+import { BlackBg, Sidebar, Wrapper } from "../components/SharedWrappers";
 
 interface IPractice {
   name: string;
-  jsonId: string;
   address: string;
-}
-interface IPracticeUI extends IPractice {
+  phone: string;
+  status: string;
+  postcode: string;
+  rating: string;
+  reviews: number;
+  website: string;
+  latitude: string;
+  longitude: string;
+  placeId: string;
   isVisible: boolean;
+  reviewsUrl: string;
 }
 
 const IndexPage: React.FC<PageProps> = ({ data }: any) => {
-  const practiceData: IPracticeUI[] = practices.map(x => {
-    (x as any)["isVisible"] = true;
-    return x as IPracticeUI
-  })
+  const [filteredList, setFilteredList] = useState(practices as IPractice[])
   const [searchTerm, setSearchTerm] = useState("");
   const [ratingsFilter, setRatingsFilter] = useState([{
     rating: "All",
@@ -47,42 +53,49 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     rating: "5",
     selected: false
   }])
-
   const [practiceFilter, setPracticeFilter] = useState<{
     practice: string,
     id: string,
     selected: boolean
   }[]>([])
-
   const [pagination, setPagination] = useState({
-    data: [] as IPracticeUI[],
+    data: [] as IPractice[],
     offset: 0,
     numberPerPage: 10,
     pageCount: 0,
-    currentData: [] as IPracticeUI[]
+    currentData: [] as IPractice[]
   });
+  const [foundPostcodes, setFoundPostcodes] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (isMobile) {
+      document.getElementsByTagName("body")[0].classList.toggle("set-overflow");
+    }
+  }, [!sidebarOpen]);
 
   useEffect(() => {
     setPagination({
-      data: practiceData.slice(0,50),
+      data: filteredList,
       offset: 0,
       numberPerPage: 9,
       pageCount: 0,
-      currentData: [] as IPracticeUI[]
+      currentData: [] as IPractice[]
     })
-  }, [practiceData.length])
+  }, [filteredList.length])
   
   useEffect(() => {
     setPracticeFilter([{
       practice: "All",
       id: "0",
       selected: true
-    }, ...practiceData.slice(0,50).map(x => ({
+    }, ...filteredList.slice(0,50).map(x => ({
       practice: x.name,
-      id: x.jsonId,
+      id: x.placeId,
       selected: false
     }))]);
-  }, [practiceData.length])
+  }, [filteredList.length])
 
   useEffect(() => {
     setPagination((prevState) => {
@@ -124,69 +137,105 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
   //     })
   // }
 
-  const filterByRating = (rating: string) => {
-    setRatingsFilter(ratingsFilter.map(x => {
-      x.selected = x.rating === rating;
-      return x;
-    }))
-  }
-
-  const filterByDentist = (event: any) => {
-    const dentist = event.target.value;
-    setPracticeFilter(practiceFilter.map(x => {
-      x.selected = x.practice === dentist;
-      return x;
-    }))
-  }
-
-
-  const searchByText = (item: IPracticeUI) => {
-    const itemLine = `${item.name} ${item.address}`
+  const searchByText = (item: IPractice) => {
+    const itemLine = `${item.name} ${item.address}`;
     return itemLine.toLowerCase().includes(searchTerm.toLowerCase())
   }
 
-  const filteredPractices = () => {
-    return practiceData.filter(searchByText).slice(0,18);
+  const onSearchSelect = async (postcode: string) => {
+    const postcodeSearchResponse = await fetch(
+      `http://postcodes.io/outcodes/${postcode.split(" ")[0]}/nearest`
+    );
+    const postcodeData = await postcodeSearchResponse.json();
+    const postCodes: string[] = postcodeData.result.map((pd: any) => pd.outcode.toLowerCase());
+    const foundPractices = filteredList.filter(x => {
+      const outcode = x.postcode?.toLowerCase().split(" ")[0];
+      return postCodes.some(code => outcode.startsWith(code.toLowerCase()));
+    }).slice(0,20).map(x => x.address);
+    const response = await fetch(
+      `http://localhost:3000/find-placeid?postcode=${postcode}` 
+    );
+    const x = await response.json();
+    try {
+      const distanceMatrixResponse = await fetch(
+        `http://localhost:3000/calculate-distance`,
+        {
+          method: "POST",
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            placeId: x.placeId,
+            practices: foundPractices.join("|")
+          }),
+        }
+        );
+        const y = await distanceMatrixResponse.json();
+        console.log(y)
+      } catch (e) {
+        console.log(e)
+    }
+  }
+
+  const handleFilterClick = () => {
+    let copy = !sidebarOpen;
+    setSidebarOpen(copy)
   }
 
   return (
-        <Layout>
-        <StyledHeading> Reviews </StyledHeading>
-        <Wrapper>
-          <SearchBar onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by practice or address"/>
-          <small>Showing {filteredPractices().length} of {practiceData.length} Practices</small>
-          <Practices>
-            {
-              filteredPractices().map(item => 
-              <Practice key={item.jsonId}>
-                  <StarRating rating={5}/>
-                  <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
-                    <h3>{item.name}</h3> <span>{item.address}</span>
-                  </Link>
-                  <ReviewHR />
-                  <PracticeFooter>
-                    <LeaveAReview target="_blank" href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">
-                      leave a review
-                      <Chevron />
-                    </LeaveAReview>
+    <Layout>
+      {sidebarOpen && <BlackBg onClick={handleFilterClick} />}
+      <StyledHeading> Reviews </StyledHeading>
+      <FilterButton onClick={handleFilterClick}>Filter</FilterButton>
+      <Searchbar handlePostcodeSearch={(outcode) => onSearchSelect(outcode)} />
+      {/* <small>Showing {practiceData.length} of {practiceData.length} Practices</small> */}
+      <Wrapper>
+        <Practices>
+          {
+            filteredList.map(item => 
+            <Practice key={item.placeId}>
+                <StarRating rating={5}/>
+                <Link to={"/practices/" + item.name.split(" ").join("-").toLowerCase()}>
+                  <h3>{item.name}</h3> <span>{item.address}</span>
+                </Link>
+                <ReviewHR />
+                <PracticeFooter>
+                  <LeaveAReview target="_blank" href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y">
+                    leave a review
+                    <Chevron />
+                  </LeaveAReview>
+                  <a href={item.website} target="_blank">
                     <Globe />
-                  </PracticeFooter>
-              </Practice>)
-            }
-          </Practices>
-        </Wrapper>
-      </Layout>
+                  </a>
+                </PracticeFooter>
+            </Practice>)
+          }
+        </Practices>
+        <Sidebar></Sidebar>
+      </Wrapper>
+    </Layout>
   );
 }
 
 export const query = graphql`
   query GetPractices {
-    allPracticesJson {
+    allPracticesV3Json {
       edges {
         node {
-          address
-          jsonId
           name
+          placeId
+          website
+          status
+          address
+          phone
+          postcode
+          isVisible
+          rating
+          reviews
+          reviewsUrl
+          longitude
+          latitude
         }
       }
     }
@@ -235,6 +284,7 @@ const Practices = styled.ul`
   padding: 0;
   margin: 0;
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   gap: 20px;
 `
@@ -243,7 +293,6 @@ const Practice = styled.li`
   padding: 0;
   margin: 0;
   list-style: none;
-  flex: 1 0 48%;
   padding: 20px;
   background-color: #fff;
   border-radius: 3px;
@@ -254,20 +303,6 @@ const Practice = styled.li`
   }
 `
 
-const SearchBar = styled.input`
-  width: 100%;
-  padding: 20px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0);
-  border-radius: 3px;
-  background-color: #fff;
-  font-size: 16px;
-  border: none;
-  transition: all 0.25s ease;
-  &:focus {
-    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-    outline: none;
-  }
-`
 
 const SidebarSection = styled.div`
   h3 {
@@ -355,39 +390,6 @@ const ReviewBody = styled.div`
   flex-direction: column;
   p {
     text-align: left;
-  }
-`
-
-const Wrapper = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding-bottom: 30px;
-  .hide {
-    display: none;
-  }
-`
-
-const Sidebar = styled.aside`
-  transition: all 0.35s ease;
-  position: absolute;
-  background-color: #fff;
-  padding: 20px;
-  left: 0;
-  top: 0;
-  width: 70%;
-  transform: translateX(100vw);
-  height: 100vh;
-  .active {
-    background-color: var(--purple);
-    color: #fff;
-  }
-  @media only screen and (min-width: 760px) {
-    position: static;
-    transform: translateX(0);
-    width: 100%;
-    padding: 20px;
-    border-radius: 3px;
   }
 `
 
