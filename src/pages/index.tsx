@@ -154,12 +154,12 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
       return postCodes.some(code => outcode.startsWith(code.toLowerCase()));
     }).slice(0,20);
     const response = await fetch(
-      `http://localhost:3000/find-placeid?postcode=${postcode}` 
+      `https://golden-smiles-be-fayfdhfvsa-uc.a.run.app/find-placeid?postcode=${postcode}` 
     );
     const x = await response.json();
     try {
       const distanceMatrixResponse = await fetch(
-        `http://localhost:3000/calculate-distance`,
+        `https://golden-smiles-be-fayfdhfvsa-uc.a.run.app/calculate-distance`,
         {
           method: "POST",
           headers: {
