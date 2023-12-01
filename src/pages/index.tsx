@@ -28,30 +28,22 @@ interface IPractice {
 }
 
 const IndexPage: React.FC<PageProps> = ({ data }: any) => {
-  const [filteredList, setFilteredList] = useState(practices as IPractice[])
+  const [practiceList, setPracticeList] = useState((practices as IPractice[]));
   const [searchTerm, setSearchTerm] = useState("");
   const [ratingsFilter, setRatingsFilter] = useState([{
     rating: "All",
     selected: true
   },
   {
-    rating: "1",
+    rating: "3.0",
     selected: false
   },
   {
-    rating: "2",
+    rating: "4.0",
     selected: false
   },
   {
-    rating: "3",
-    selected: false
-  },
-  {
-    rating: "4",
-    selected: false
-  },
-  {
-    rating: "5",
+    rating: "4.5",
     selected: false
   }])
   const [practiceFilter, setPracticeFilter] = useState<{
@@ -77,28 +69,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
   }, [!sidebarOpen]);
 
   useEffect(() => {
-    setPagination({
-      data: filteredList,
-      offset: 0,
-      numberPerPage: 9,
-      pageCount: 0,
-      currentData: [] as IPractice[]
-    })
-  }, [filteredList.length])
-  
-  useEffect(() => {
-    setPracticeFilter([{
-      practice: "All",
-      id: "0",
-      selected: true
-    }, ...filteredList.slice(0,50).map(x => ({
-      practice: x.name,
-      id: x.placeId,
-      selected: false
-    }))]);
-  }, [filteredList.length])
-
-  useEffect(() => {
     setPagination((prevState) => {
       return {
         ...prevState,
@@ -116,27 +86,28 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
 
   const activeFilters = () => {
     const filter: any = {
-      ...ratingsFilter.find(x => x.selected),
-      ...practiceFilter.find(x => x.selected)
+      ...ratingsFilter.find(x => x.selected)
     }
     delete filter["selected"];
     delete filter["id"];
-    if (filter["practice"] === "All") {
-      delete filter["practice"];
-    }
     if (filter["rating"] === "All") {
       delete filter["rating"];
     }
-    console.log(filter)
     return filter;
   }
 
-  // const filteredList = () => {
-  //   return practiceList
-  //     .filter((item: any) => {
-  //       return Object.entries(activeFilters()).every(([k, v]) => item[k] === v)
-  //     })
-  // }
+  const filterPracticeList = () => {
+    setPracticeList([...(practices as IPractice[])
+    .filter((item: IPractice) => {
+      return Object.entries(activeFilters()).every(([k, v]) => {
+        if(k === "rating") {
+          return +item.rating > Number(v)
+        } else {
+          return (item as any)[k] === v
+        }
+      })
+    })])
+  }
 
   const searchByText = (item: IPractice) => {
     const itemLine = `${item.name} ${item.address}`;
@@ -149,7 +120,7 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     );
     const postcodeData = await postcodeSearchResponse.json();
     const postCodes: string[] = postcodeData.result.map((pd: any) => pd.outcode.toLowerCase());
-    const foundPractices = filteredList.filter(x => {
+    const foundPractices = practiceList.filter(x => {
       const outcode = x.postcode?.toLowerCase().split(" ")[0];
       return postCodes.some(code => outcode.startsWith(code.toLowerCase()));
     }).slice(0,20);
@@ -173,16 +144,16 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
         }
         );
         const response = await distanceMatrixResponse.json();
-        const newList = filteredList.map(x => {
+        setPracticeList(
+          practiceList.map(x => {
             const item = response.data.find(d => {
               return String(d.address).toLowerCase().includes(x.postcode.toLowerCase())
             })
             x.data = item?.distance_data;
             x.isVisible = item?.distance_data ? true : false;
             return x;
-        })
-        console.log(newList)
-        setFilteredList([...newList])
+          })
+        )
       } catch (e) {
         console.log(e)
     }
@@ -198,6 +169,7 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
       x.selected = x.rating === rating;
       return x;
     }))
+    filterPracticeList();
   }
 
   const sortByDate = (type: string) => {
@@ -225,7 +197,7 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
       <Wrapper>
         <Practices>
           {
-            filteredList.filter(x => x.isVisible).sort((a, b) => a.data?.distance?.text?.split(" ")[0] - b.data?.distance?.text?.split(" ")[0]).map(item => 
+            practiceList.filter(x => x.isVisible).sort((a, b) => a.data?.distance?.text?.split(" ")[0] - b.data?.distance?.text?.split(" ")[0]).map(item => 
             <Practice key={item.placeId}>
                 <DistanceRatingWrapper>
                   <div>
@@ -260,20 +232,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
         </Practices>
         
         <Sidebar className={sidebarOpen ? "open" : ""}>
-           <SidebarSection>
-             <h3>Sort by Date</h3>
-             <SortOptionsWrapper>
-               {/* {sortOptions.map((x) => (
-                <FilterOption
-                  key={x.type}
-                  className={x.selected ? "active" : ""}
-                  onClick={() => sortByDate(x.type)}
-                >
-                  {x.type}
-                </FilterOption>
-              ))} */}
-            </SortOptionsWrapper>
-          </SidebarSection>
           <SidebarSection>
             <h3>Filter by Rating</h3>
             <RatingsFilterWrapper>
@@ -283,7 +241,7 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
                   className={x.selected ? "active" : ""}
                   onClick={() => filterByRating(x.rating)}
                 >
-                  {x.rating}
+                  {x.rating}{x.rating !== "All" ? "+" : ""}
                 </FilterOption>
               ))}
             </RatingsFilterWrapper>
@@ -460,7 +418,7 @@ const FilterOption = styled.span`
   border-radius: 3px;
   cursor: pointer;
   font-weight: 600;
-  flex: 0 0 15%;
+  flex: 0 0 22%;
   @media only screen and (min-width: 760px) {
     padding: 3px 10px;
   }
