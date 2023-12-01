@@ -193,6 +193,28 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     setSidebarOpen(copy)
   }
 
+  const filterByRating = (rating: string) => {
+    setRatingsFilter(ratingsFilter.map(x => {
+      x.selected = x.rating === rating;
+      return x;
+    }))
+  }
+
+  const sortByDate = (type: string) => {
+    // setSortOptions(sortOptions.map(x => {
+    //   x.selected = x.type === type;
+    //   return x;
+    // }))
+  }
+
+  const filterByTreatment = (event: any) => {
+    const treatment = event.target.value;
+    // setTreatmentFilter(treatmentFilter.map(x => {
+    //   x.selected = x.treatment === treatment;
+    //   return x;
+    // }))
+  }
+
   return (
     <Layout>
       {sidebarOpen && <BlackBg onClick={handleFilterClick} />}
@@ -206,7 +228,15 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
             filteredList.filter(x => x.isVisible).sort((a, b) => a.data?.distance?.text?.split(" ")[0] - b.data?.distance?.text?.split(" ")[0]).map(item => 
             <Practice key={item.placeId}>
                 <DistanceRatingWrapper>
-                  <StarRating rating={5}/>
+                  <div>
+                    {
+                      item.reviews === 0 ? "No reviews" :
+                      <ReviewRatingWrapper>
+                        <StarRating rating={item.rating}/>
+                        - based on {+item.reviews} reviews
+                      </ReviewRatingWrapper>
+                    }
+                  </div>
                   {
                     item.data &&
                     <small>{item.data?.distance?.text} away</small>
@@ -228,7 +258,45 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
             </Practice>)
           }
         </Practices>
-        <Sidebar></Sidebar>
+        
+        <Sidebar className={sidebarOpen ? "open" : ""}>
+           <SidebarSection>
+             <h3>Sort by Date</h3>
+             <SortOptionsWrapper>
+               {/* {sortOptions.map((x) => (
+                <FilterOption
+                  key={x.type}
+                  className={x.selected ? "active" : ""}
+                  onClick={() => sortByDate(x.type)}
+                >
+                  {x.type}
+                </FilterOption>
+              ))} */}
+            </SortOptionsWrapper>
+          </SidebarSection>
+          <SidebarSection>
+            <h3>Filter by Rating</h3>
+            <RatingsFilterWrapper>
+              {ratingsFilter.map((x) => (
+                <FilterOption
+                  key={x.rating}
+                  className={x.selected ? "active" : ""}
+                  onClick={() => filterByRating(x.rating)}
+                >
+                  {x.rating}
+                </FilterOption>
+              ))}
+            </RatingsFilterWrapper>
+          </SidebarSection>
+          <SidebarSection>
+            <h3>Filter by Treatment</h3>
+            {/* <Dropdown name="treatment" id="treatment" onChange={filterByTreatment}>
+              {treatmentFilter.map((x, i) => (
+                <option key={i}>{x.treatment}</option>
+              ))}
+            </Dropdown> */}
+          </SidebarSection>
+        </Sidebar>
       </Wrapper>
     </Layout>
   );
@@ -258,8 +326,15 @@ export const query = graphql`
   }
 `
 
+const ReviewRatingWrapper = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+`
+
 const DistanceRatingWrapper = styled.aside`
   display: flex;
+  margin: 3px 0 10px; 
   justify-content: space-between;
 `
 

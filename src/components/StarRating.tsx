@@ -3,25 +3,38 @@ import styled from "styled-components";
 import Star from "../images/star.svg"
 
 interface IStarRating {
-  rating: number
+  rating: string
 }
 
 const StarRating = ({rating}: IStarRating) => {
 
+  const totalFiveStarsWidth = 92;
+
+  const calculateWidth = () => (totalFiveStarsWidth / 5 * +rating).toFixed(0);
+
   return (
-    <StarWrapper>
-      {[...Array(rating).keys()].map((_, i) => (
-        <Star key={i} />
-      ))}
-    </StarWrapper>
+    <StarOuterWrapper width={calculateWidth()}>
+      <StarWrapper>
+        {[...Array(5).keys()].map((_, i) => (
+          <Star key={i} />
+        ))}
+      </StarWrapper>
+    </StarOuterWrapper>
   )
 }
 
+const StarOuterWrapper = styled.div<{width: string}>`
+  position: relative;
+  height: 20px;
+  width: ${({width}) => width}px;
+  overflow: hidden;
+`
+
 const StarWrapper = styled.div`
   display: flex;
-  gap: 2px;
-  margin: 3px 0 10px; 
+  position: absolute;
   svg {
+    display: inline;
     width: 18px;
     height: auto;
     path {
