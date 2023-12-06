@@ -249,51 +249,9 @@ const Review = styled.li`
   }
 `
 
-const Dropdown = styled.select`
-  border: none;
-  border-radius: 3px;
-  background-color: #fde8ad;
-  font-size: 16px;
-  padding: 6px 4px;
-  font-size: 14px;
-  width: 100%;
-  &:focus {
-    outline: none;
-  }
-  option {
-    font-size: 16px;
-  }
-  @media only screen and (min-width: 760px) {
-    padding: 3px 4px;
-  }
-`
-
 const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
-`
-  
-const HeaderLeft = styled.div`
-  gap: 20px;
-  display: inherit;
-`
-
-const ReviewDate = styled.span`
-  font-size: 13px;
-  opacity: 0.4;
-`
-
-const ReviewBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  p {
-    text-align: left;
-  }
-`
-
-const SortOptionsWrapper = styled.div`
-  display: flex;
-  gap: 5px;
 `
 
 const StyledHeading = styled.h1`

@@ -30,3 +30,29 @@ body:before {
   height: 95vh;
   clip-path: polygon(0 1%, 100% 0%, 100% 70%, 0 100%);
 }
+
+
+select {
+  border: none;
+  border-radius: 3px;
+  background-color: #fff;
+  font-size: 16px;
+  padding: 9px 4px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 400px;
+}
+
+select:focus {
+  outline: none;
+}
+
+select option {
+  font-size: 16px;
+}
+
+@media only screen and (min-width: 760px) {
+  select {
+    padding: 3px 4px;
+  }
+}

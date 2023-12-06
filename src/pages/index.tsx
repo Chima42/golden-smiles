@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { HeadFC, PageProps, graphql, Link } from "gatsby"
 import styled from "styled-components"
-import Star from "../images/star.svg"
 import Chevron from "../images/right-arrow.svg"
 import Globe from "../images/globe.svg"
 import practices from "../data/practicesV3.json";
@@ -78,12 +77,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
     })
   }, [pagination.numberPerPage, pagination.offset])
 
-  const handlePageClick = (event: any) => {
-    const selected = event.selected;
-    const offset = selected * pagination.numberPerPage
-    setPagination({ ...pagination, offset })
-  }
-
   const activeFilters = () => {
     const filter: any = {
       ...ratingsFilter.find(x => x.selected)
@@ -107,11 +100,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
         }
       })
     })])
-  }
-
-  const searchByText = (item: IPractice) => {
-    const itemLine = `${item.name} ${item.address}`;
-    return itemLine.toLowerCase().includes(searchTerm.toLowerCase())
   }
 
   const onSearchSelect = async (postcode: string) => {
@@ -170,21 +158,6 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
       return x;
     }))
     filterPracticeList();
-  }
-
-  const sortByDate = (type: string) => {
-    // setSortOptions(sortOptions.map(x => {
-    //   x.selected = x.type === type;
-    //   return x;
-    // }))
-  }
-
-  const filterByTreatment = (event: any) => {
-    const treatment = event.target.value;
-    // setTreatmentFilter(treatmentFilter.map(x => {
-    //   x.selected = x.treatment === treatment;
-    //   return x;
-    // }))
   }
 
   return (
@@ -381,57 +354,6 @@ const FilterButton = styled.div`
   }
 `
 
-const SortOptionsWrapper = styled.div`
-  display: flex;
-  gap: 5px;
-`
-
-const Dropdown = styled.select`
-  border: none;
-  border-radius: 3px;
-  background-color: #fde8ad;
-  font-size: 16px;
-  padding: 6px 4px;
-  font-size: 14px;
-  width: 100%;
-  &:focus {
-    outline: none;
-  }
-  option {
-    font-size: 16px;
-  }
-  @media only screen and (min-width: 760px) {
-    padding: 3px 4px;
-  }
-`
-
-const ReviewHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  `
-  
-const HeaderLeft = styled.div`
-  gap: 20px;
-  display: inherit;
-`
-
-const ReviewDate = styled.span`
-  font-size: 13px;
-  opacity: 0.4;
-`
-
-const ReviewBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  p {
-    text-align: left;
-  }
-`
-
-const ReviewDescription = styled.p`
-  font-size: 16px;
-`
-
 const StyledHeading = styled.h1`
   flex: 100%;
   text-align: center;
@@ -442,61 +364,6 @@ const StyledHeading = styled.h1`
   @media only screen and (min-width: 760px) {
     margin: 90px 0;
   }
-`
-
-const MetaWrapper = styled.div`
-  display: flex;
-  gap: 4px;
-  flex-direction: column;
-  @media only screen and (min-width: 760px) {
-    gap: 25px;
-    flex-direction: row;
-  }
-`
-
-const ReviewMeta = styled.p`
-  color: #ADADAD;
-  font-size: 14.5px;
-  text-align: left;
-  span {
-    color: #000;
-  }
-  @media only screen and (min-width: 760px) {
-    span {
-      display: inline;
-    }
-  }
-`
-
-const StyledReviewTitle = styled.p`
-  color: var(--purple);
-  font-size: 21px;
-  font-weight: 600;
-`
-
-
-const StyledHR = styled.hr`
-  border: none;
-  margin: 10px 0;
-  border-bottom: solid 1px rgba(0,0,0,0.4);
-  opacity: 0.3;
-`
-
-const StyledImage = styled.img`
-  border: none;
-  border-radius: 100px;
-  margin: 0 0 7px 0;
-  height: max-content;
-  border: solid 2px #fff;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
-`
-
-const Review = styled.div`
-  background-color: #fff;
-  border-radius: 3px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.1);
 `
 
 export default IndexPage

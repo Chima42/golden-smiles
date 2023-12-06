@@ -7,12 +7,14 @@ export default function Layout({ children }: any) {
     <StyledWrapper>
       <StyledHeader>
         <StyledLogo>Golden Smiles</StyledLogo>
-        <WriteAReview
-          target="_blank"
-          href="https://bu9ylzbcyhu.typeform.com/to/ehW2GX7Y"
-        >
-          write a review
-        </WriteAReview>
+        {
+          !window.location.href.includes("review/new") &&
+          <WriteAReview
+            href="/review/new"
+          >
+            write a review
+          </WriteAReview>
+        }
       </StyledHeader>
       <StyledMain>
         {children}
