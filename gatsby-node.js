@@ -1,22 +1,26 @@
 const path = require("path");
 
-// exports.createSchemaCustomization = ({ actions, schema }) => {
-//   const { createTypes } = actions
-//   const typeDefs = [
-//     schema.buildObjectType({
-//       name: 'PracticesJson',
-//       fields: {
-//         name: 'String!',
-//         address: 'String!' 
-//       },
-//       interfaces: ['Node'],
-//       extensions: {
-//         infer: false,
-//       },
-//     })
-//   ]
-//   createTypes(typeDefs)
-// }
+exports.createSchemaCustomization = ({ actions, schema }) => {
+  const { createTypes } = actions
+  const typeDefs = [
+    schema.buildObjectType({
+      name: 'ReviewsDataJson',
+      fields: {
+        author: 'String!',
+        reviewBody: 'String!',
+        dateCreated: 'String!',
+        images: 'String!',
+        reviewRating: 'Int!',
+        place_id: 'String!',
+      },
+      interfaces: ['Node'],
+      extensions: {
+        infer: false,
+      },
+    })
+  ]
+  createTypes(typeDefs)
+}
 
 exports.createPages = async ({ graphql, actions }) => {
   const { data } = await graphql(`

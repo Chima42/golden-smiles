@@ -8,7 +8,7 @@ import practices from "../data/practicesV3.json";
 import Layout from "../components/Layout"
 import Searchbar from "../components/Searchbar"
 import StarRating from "../components/StarRating"
-import { BlackBg, Sidebar, Wrapper } from "../components/SharedWrappers";
+import { BlackBg, FilterOption, RatingsFilterWrapper, Sidebar, Wrapper } from "../components/Shared";
 
 interface IPractice {
   name: string;
@@ -246,14 +246,14 @@ const IndexPage: React.FC<PageProps> = ({ data }: any) => {
               ))}
             </RatingsFilterWrapper>
           </SidebarSection>
-          <SidebarSection>
+          {/* <SidebarSection>
             <h3>Filter by Treatment</h3>
-            {/* <Dropdown name="treatment" id="treatment" onChange={filterByTreatment}>
+            <Dropdown name="treatment" id="treatment" onChange={filterByTreatment}>
               {treatmentFilter.map((x, i) => (
                 <option key={i}>{x.treatment}</option>
               ))}
-            </Dropdown> */}
-          </SidebarSection>
+            </Dropdown>
+          </SidebarSection> */}
         </Sidebar>
       </Wrapper>
     </Layout>
@@ -386,11 +386,6 @@ const SortOptionsWrapper = styled.div`
   gap: 5px;
 `
 
-const RatingsFilterWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-`
-
 const Dropdown = styled.select`
   border: none;
   border-radius: 3px;
@@ -407,20 +402,6 @@ const Dropdown = styled.select`
   }
   @media only screen and (min-width: 760px) {
     padding: 3px 4px;
-  }
-`
-
-const FilterOption = styled.span`
-  padding: 6px 10px;
-  background: #fde8ad;
-  text-align: center;
-  font-size: 16px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-weight: 600;
-  flex: 0 0 22%;
-  @media only screen and (min-width: 760px) {
-    padding: 3px 10px;
   }
 `
 
@@ -520,4 +501,4 @@ const Review = styled.div`
 
 export default IndexPage
 
-export const Head: HeadFC = () => <title>Home Page</title>
+export const Head: HeadFC = () => <title>Rated Smiles</title>
